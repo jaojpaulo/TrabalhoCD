@@ -3,8 +3,11 @@ from time import time
 import logging
 import os
 
+INIT_MASTER_LOG = "IP/Port: {}, Time: {}, Tolerance: {}"
 CHANGE_TIME_ERROR = "Failed to set time"
 CHANGE_TIME_SUCCES = "Succes to set time"
+CHANGE_NEW_TIME_ERROR = "Failed to new set time"
+CHANGE_NEW_TIME_SUCCES = "Success to new set time"
 
 
 class Master(object):
@@ -17,8 +20,9 @@ class Master(object):
         self.ip_list = self.list_ip(slaves_file)
         self.timesum = 0
         self.average = 0
+        self.init_master()
         self.clock = time()
-        self.set_master_time()
+        self.set_init_master_time()
 
     def get_slaves_time(self):
         for ip in self.ip_list:
@@ -39,12 +43,23 @@ class Master(object):
         print("Time average", str(self.average))
         self.set_master_time()
 
+    def set_init_master_time(self):
+        result = os.system("timedatectl set-time '{}'".format(self.clock_time))
+        if result == 256:
+            self.createlog(CHANGE_TIME_ERROR, "error")
+        else:
+            self.createlog(CHANGE_TIME_SUCCES, "info")
+
     def set_master_time(self):
         result = os.system("timedatectl set-time '{}'".format(self.clock_time))
         if result == 256:
             self.createlog(CHANGE_TIME_ERROR, "error")
         else:
             self.createlog(CHANGE_TIME_SUCCES, "info")
+
+    def init_master(self):
+        self.createlog(INIT_MASTER_LOG.format(self.ip_port, self.clock_time, self.d), "info")
+
 
     @staticmethod
     def list_ip(file_name):
