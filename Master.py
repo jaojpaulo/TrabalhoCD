@@ -3,6 +3,9 @@ from time import time
 import logging
 import os
 
+CHANGE_TIME_ERROR = "Failed to set time"
+CHANGE_TIME_SUCCES = "Succes to set time"
+
 
 class Master(object):
 
@@ -37,7 +40,11 @@ class Master(object):
         self.set_master_time()
 
     def set_master_time(self):
-        os.system("date +%T -s '{}'".format(self.clock_time))
+        result = os.system("timedatectl set-time '{}'".format(self.clock_time))
+        if result == 256:
+            self.createlog(CHANGE_TIME_ERROR, "error")
+        else:
+            self.createlog(CHANGE_TIME_SUCCES, "info")
 
     @staticmethod
     def list_ip(file_name):

@@ -23,7 +23,6 @@ class Machine(object):
             print("Slave machine")
             t = ThreadedServer(slave, port=int(ip_port[ip_port.index(':')+1:]))
             t.start()
-
         else:
             print("Option not available")
 

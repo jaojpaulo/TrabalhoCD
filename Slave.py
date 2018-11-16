@@ -3,6 +3,11 @@ from time import time
 import logging
 import os
 
+TIME_EVENT = "Get time event "
+SLAVE_CURRENT_TIME = "Slave current time {}"
+CHANGE_TIME_ERROR = "Failed to set time"
+CHANGE_TIME_SUCCES = "Success to set time"
+
 
 class Slave(rpyc.Service):
 
@@ -12,18 +17,25 @@ class Slave(rpyc.Service):
         self.logs_file = logs_file
 
     def exposed_get_time(self, master_time):
-        print("Get time event ")
-        print("Time 1", str(time()))
-        #print("Time 2", str(self.time))
+        print(TIME_EVENT)
+        self.createlog(TIME_EVENT, "info")
+        current_time = SLAVE_CURRENT_TIME.format(str(time()))
+        print(current_time)
+        self.createlog(current_time, "info")
+
         difference = master_time - time()
-        self.createlog("Get time event", 'info')
+        self.createlog(TIME_EVENT, 'info')
         return difference
 
     def set_slave_time(self):
-        os.system("date +%T -s '{}'".format(self.clock_time))
+        result = os.system("timedatectl set-time '{}'".format(self.clock_time))
+        if result == 256:
+            self.createlog(CHANGE_TIME_ERROR, "error")
+        else:
+            self.createlog(CHANGE_TIME_SUCCES, "info")
 
     '''def exposed_set_time(self, new_time):
-        os.system()'''
+        os.system("timedatectl set-time '{}'".format(self.clock_time))'''
 
     def createlog(self, text, l_type):
         logging.basicConfig(filename=self.logs_file, level=logging.INFO)
