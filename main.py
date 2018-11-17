@@ -14,6 +14,7 @@ class Machine(object):
                 print("Execution ", i)
                 master.get_slaves_time()
                 master.calculate_time()
+                master.set_machines_time()
                 i += 1
                 time.sleep(15)
 
