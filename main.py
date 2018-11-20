@@ -13,14 +13,9 @@ class Machine(object):
             while True:
                 i += 1
                 print("Execution ", i)
-                try:
-                    master.get_slaves_time()
-                except:
-                    continue
-                else:
-                    master.calculate_time()
-                    master.set_machines_time()
-                time.sleep(15)
+                master.get_slaves_time()
+                master.calculate_time()
+                time.sleep(5)
 
         elif mtype is 's':
             slave = Slave(ip_port, clock_time, logs_file)

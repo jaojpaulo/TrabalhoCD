@@ -30,7 +30,7 @@ class Master(object):
             try:
                 port = int(ip[ip.index(":") + 1:])
                 ip_address = ip[:ip.index(":")]
-                c = rpyc.connect(ip_address, port)
+                c = rpyc.connect(ip_address, port,)
                 current_t = datetime.now()
                 print("Currente Master time {}:{}:{}".format(str(current_t.hour),str(current_t.minute),str(current_t.second)))
                 time_d = timedelta(hours=current_t.hour,minutes=current_t.minute, seconds=current_t.second)
@@ -61,8 +61,8 @@ class Master(object):
                 self.createlog("Slave in socket {} connection succeeded".format(ip), 'info')
             except ConnectionRefusedError:
                 self.agents_count -= 1
-                self.createlog("Slave in socket {} not available".format(ip), 'error')
-                print("Slave in socket {} not available".format(ip))
+                self.createlog("Slave in socket {} not available for time update".format(ip), 'error')
+                print("Slave in socket {} not available for time update".format(ip))
 
     def set_master_time(self):
         seconds_f = self.average % 60
@@ -74,10 +74,10 @@ class Master(object):
 
         avg_time = timedelta(hours=hour_f, minutes=minutes_f, seconds=seconds_f)
         final = cur_time + avg_time
-        self.set_init_master_time(time= str(final))
+        self.set_init_master_time(time=str(final))
         return str(final)
 
-    def set_init_master_time(self, time = None):
+    def set_init_master_time(self, time=None):
         if not time:
             time = self.clock_time
         result = os.system("timedatectl set-time '{}'".format(time))
