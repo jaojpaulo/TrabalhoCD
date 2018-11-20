@@ -1,5 +1,5 @@
 import rpyc
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import os
 
@@ -21,7 +21,7 @@ class Master(object):
         self.timesum = 0
         self.average = 0
         self.agents_count = 0
-        self.init_master()
+        self.init_master_log()
         self.set_init_master_time()
 
     def get_slaves_time(self):
@@ -31,8 +31,10 @@ class Master(object):
                 port = int(ip[ip.index(":") + 1:])
                 ip_address = ip[:ip.index(":")]
                 c = rpyc.connect(ip_address, port)
-                time_s = self.parse_time()
-                difference = c.root.get_time(time_s)
+                current_t = datetime.now()
+                print("Currente Master time {}:{}:{}".format(str(current_t.hour),str(current_t.minute),str(current_t.second)))
+                time_d = timedelta(hours=current_t.hour,minutes=current_t.minute, seconds=current_t.second)
+                difference = c.root.get_time(time_d)
                 if abs(difference) <= self.d*60:
                     self.timesum += difference
                 else:
@@ -45,41 +47,11 @@ class Master(object):
 
     def calculate_time(self):
         self.average = self.timesum / (len(self.ip_list) + 1)
-        print("Time average", str(self.average))
+        print("Time average {} seconds".format(str(self.average)))
         self.set_machines_time()
 
-    def set_init_master_time(self):
-        hours = "00"
-        minutes = "00"
-        seconds = "00"
-        time_m = 0
-        time_h = 0
-        if self.average > 59:
-            time_m = int(self.average/60)
-            seconds = str(self.average - (time_m*60))
-        if time_m > 59:
-            time_h = int(time_m/60)
-            minutes = str(time_m - (time_h*60))
-        if time_h > 0:
-            hours = str(time_h)
-        time_f = hours+":"+minutes+":"+seconds
-        print(time_f)
-        result = os.system("timedatectl set-time '{}'".format(time_f))
-        if result == 256:
-            self.createlog(CHANGE_TIME_ERROR, "error")
-        else:
-            self.createlog(CHANGE_TIME_SUCCES, "info")
-            return time_f
-
-    def init_master(self):
-        self.createlog(INIT_MASTER_LOG.format(self.ip_port, self.clock_time, self.d), "info")
-
-    def parse_time(self):
-        t = datetime.now()
-        return (t.hour*3600) + (t.minute*60) + t.second
-
     def set_machines_time(self):
-        time_f = self.set_init_master_time()
+        time_f = self.set_master_time()
         for ip in self.ip_list:
             try:
                 port = int(ip[ip.index(":") + 1:])
@@ -92,6 +64,36 @@ class Master(object):
                 self.createlog("Slave in socket {} not available".format(ip), 'error')
                 print("Slave in socket {} not available".format(ip))
 
+    def set_master_time(self):
+        seconds_f = self.average % 60
+        minute_intermediari = int(self.average/60)
+        minutes_f = minute_intermediari % 60
+        hour_f = int(minute_intermediari/60)
+
+        cur_time = timedelta(hours=datetime.now().hour,minutes=datetime.now().minute, seconds=datetime.now().second)
+
+        avg_time = timedelta(hours=hour_f, minutes=minutes_f, seconds=seconds_f)
+        final = cur_time + avg_time
+        self.set_init_master_time(time= str(final))
+        return str(final)
+
+    def set_init_master_time(self, time = None):
+        if not time:
+            time = self.clock_time
+        result = os.system("timedatectl set-time '{}'".format(time))
+        if result == 256:
+            self.createlog(CHANGE_TIME_ERROR, "error")
+        else:
+            self.createlog(CHANGE_TIME_SUCCES, "info")
+
+    def init_master_log(self):
+        self.createlog(INIT_MASTER_LOG.format(self.ip_port, self.clock_time, self.d), "info")
+
+    def parse_time(self):
+        t = datetime.now()
+        return (t.hour*3600) + (t.minute*60) + t.second
+
+
     @staticmethod
     def list_ip(file_name):
 
@@ -99,7 +101,6 @@ class Master(object):
         ips = f.readlines()
         lista = []
         for ip in ips:
-            print(ip)
             lista.append(ip)
 
         f.close()

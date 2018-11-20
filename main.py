@@ -7,15 +7,19 @@ import fire
 class Machine(object):
 
     def Machine(self, mtype, ip_port, clock_time, logs_file, **kwargs):
-        i = 1
+        i = 0
         if mtype is 'm':
             master = Master(ip_port, clock_time, logs_file, kwargs['d'], kwargs['slaves_file'])
             while True:
-                print("Execution ", i)
-                master.get_slaves_time()
-                master.calculate_time()
-                master.set_machines_time()
                 i += 1
+                print("Execution ", i)
+                try:
+                    master.get_slaves_time()
+                except:
+                    continue
+                else:
+                    master.calculate_time()
+                    master.set_machines_time()
                 time.sleep(15)
 
         elif mtype is 's':

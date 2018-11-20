@@ -1,5 +1,5 @@
 import rpyc
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import os
 
@@ -24,16 +24,18 @@ class Slave(rpyc.Service):
     def exposed_get_time(self, master_time):
         print(TIME_EVENT)
         self.createlog(TIME_EVENT, "info")
-        current_time = SLAVE_CURRENT_TIME.format(str(datetime.now()))
-        print(current_time)
-        self.createlog(current_time, "info")
 
-        difference = master_time - self.parse_time()
+        current_time = datetime.now()
+        print(SLAVE_CURRENT_TIME.format(str(current_time.hour+":"+current_time.minute+":"+current_time.second)))
+        time_d = timedelta(hours=current_time.hour, minutes=current_time.minute, seconds=current_time.second)
+        self.createlog(SLAVE_CURRENT_TIME.format(str(current_time.hour+":"+current_time.minute+":"+current_time.second)), "info")
+
+        difference = master_time - time_d
         self.createlog(TIME_EVENT, 'info')
-        return difference
+        return int(difference.total_seconds())
 
     def exposed_set_time(self, new_time):
-        result = os.system("timedatectl set-time '{}'".format(new_time))
+        result = os.system("timedatectl set-time '{}'".format(new_time.decode("utf-8")))
         if result == 256:
             self.createlog(CHANGE_TIME_ERROR, "error")
         else:
