@@ -35,6 +35,9 @@ class Slave(rpyc.Service):
         return int(difference.total_seconds())
 
     def exposed_set_time(self, new_time):
+        correct_time_msg = "Correct time {}".format(new_time.decode("utf-8"))
+        print(correct_time_msg)
+        self.createlog(correct_time_msg, "info")
         result = os.system("timedatectl set-time '{}'".format(new_time.decode("utf-8")))
         if result == 256:
             self.createlog(CHANGE_TIME_ERROR, "error")
